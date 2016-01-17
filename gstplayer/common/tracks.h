@@ -14,6 +14,61 @@ int g_video_num = 0;
 int g_audio_idx = -1;
 int g_video_idx = -1;
 
+static void UpdateVideoTrackInf()
+{
+    backend_get_current_track('v');
+}
+
+static TrackDescription_t* GetVideoTrackForUpdate()
+{
+    if(g_video_tracks && g_video_idx < g_video_num && g_video_idx >= 0)
+    {
+        return &g_video_tracks[g_video_idx];
+    }
+    return NULL;
+}
+
+void UpdateVideoTrackInf_1(const int aspect, const int width, const int height)
+{
+    TrackDescription_t *pVidTrack = GetVideoTrackForUpdate();
+    if(pVidTrack)
+    {
+        int updated = 0;
+        if(pVidTrack->width != width)
+        {
+            pVidTrack->width = width;
+            updated = 1;
+        }
+        if(pVidTrack->height != height)
+        {
+            pVidTrack->height = height;
+            updated = 1;
+        }
+        if(updated)
+        {
+            UpdateVideoTrackInf();
+        }
+    }
+}
+
+void UpdateVideoTrackInf_2(const unsigned int framerate)
+{
+    TrackDescription_t *pVidTrack = GetVideoTrackForUpdate();
+    if(pVidTrack)
+    {
+        int updated = 0;
+        if(pVidTrack->frame_rate != framerate)
+        {
+            pVidTrack->frame_rate = framerate;
+            updated = 1;
+        }
+        if(updated)
+        {
+            UpdateVideoTrackInf();
+        }
+    }
+}
+
 static int GetCurrentTrack(const char *type, int *idx)
 {
     //if (*idx == -1)
@@ -156,6 +211,66 @@ static void FillAudioTracks()
     g_audio_num = j;
 }
 
+static void FillVideoTracks() 
+{ 
+    GstPad *videopad = NULL; 
+    int n_video = 0; 
+    int i = 0; 
+    int j = 0;
+    g_object_get(g_gst_playbin, "n-video", &n_video, NULL);
+
+    if (NULL != g_video_tracks)
+    {
+        return;
+    }
+    
+    if (n_video > 0) 
+    { 
+        g_video_tracks = malloc(sizeof(TrackDescription_t) * n_video);
+        memset(g_video_tracks, 0, sizeof(TrackDescription_t) * n_video);
+        
+        for (i = 0; i < n_video; i++) 
+        {
+            g_signal_emit_by_name(g_gst_playbin, "get-video-pad", i, &videopad); 
+            if (videopad) 
+            { 
+#if GST_VERSION_MAJOR < 1
+                GstCaps* caps = gst_pad_get_negotiated_caps(videopad);
+#else
+                GstCaps* caps = gst_pad_get_current_caps(videopad);
+#endif
+                if (!caps)
+                {
+                    continue;
+                }
+                
+                GstStructure *str = gst_caps_get_structure (caps, 0); 
+                const gchar *g_type = gst_structure_get_name(str);
+                int num = 0;
+                int denom = 0;
+                
+                TrackDescription_t *track = &g_video_tracks[j];
+                track->Id = i;
+                SetStr(&(track->Name), "und");
+                SetStr(&(track->Encoding), (char *)g_type);
+                
+                gst_structure_get_int(str, "width",  &track->width); 
+                gst_structure_get_int(str, "height", &track->height);
+                gst_structure_get_fraction(str, "framerate", &num, &denom);
+                gst_caps_unref(caps);
+                if(denom == 1001)
+                {
+                    denom = 1000;
+                }
+                track->frame_rate = num * 1000 / denom;
+                gst_object_unref (videopad); 
+                ++j;
+            }
+        }
+        g_video_num = j;
+    } 
+} 
+
 static void TracksMessageAsyncDone()
 {
     if (0 == g_audio_num)
@@ -170,6 +285,19 @@ static void TracksMessageAsyncDone()
             //SelectAudioStream(audio_idx);
         }
         backend_get_current_track('a');
+    }
+    
+    if (0 == g_video_num)
+    {
+        int video_idx = g_video_idx;
+        FillVideoTracks();
+        backend_get_tracks_list('v', NULL);
+        GetCurrentTrack("current-video", &g_video_idx);
+        if (video_idx >= 0 && video_idx != g_video_idx)
+        {
+            backend_set_track('v', video_idx);
+        }
+        backend_get_current_track('v');
     }
 }
 
@@ -236,6 +364,7 @@ TrackDescription_t* backend_get_current_track(const char type)
         }
         else // video
         {
+            // information about only current video track will be stored
             fprintf(stderr, "{\"%c_%c\":{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\",\"w\":%d,\"h\":%d,\"f\":%u}}\n", type, 'c', track->Id , track->Encoding, track->Name, track->width, track->height, track->frame_rate);
         }
     }

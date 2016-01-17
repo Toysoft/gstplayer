@@ -465,12 +465,14 @@ static gboolean gstBusCall(GstBus *bus, GstMessage *msg)
                         gst_structure_get_int (msgstruct, "aspect_ratio", &aspect);
                         gst_structure_get_int (msgstruct, "width", &width);
                         gst_structure_get_int (msgstruct, "height", &height);
+                        //UpdateVideoTrackInf_1(aspect, width, height);
                         // printf("eventSizeChanged\n");
                     }
                     else if (!strcmp(eventname, "eventFrameRateChanged") || !strcmp(eventname, "eventFrameRateAvail"))
                     {
                         int framerate = 0;
                         gst_structure_get_int (msgstruct, "frame_rate", &framerate);
+                        //UpdateVideoTrackInf_2((unsigned int)framerate);
                         // printf("eventFrameRateChanged framerate[%d]\n", framerate);
 
                     }
