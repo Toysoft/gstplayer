@@ -199,9 +199,9 @@ int main(int argc,char* argv[])
     signal(SIGINT, SigHandler);
     /* inform client that we can handle additional commands */
 #if GST_VERSION_MAJOR < 1
-    int ver = 19;
+    int ver = 20;
 #else
-    int ver = 10019;
+    int ver = 10020;
 #endif
     fprintf(stderr, "{\"GSTPLAYER_EXTENDED\":{\"version\":%d,\"gst_ver_major\":%d}}\n", ver, GST_VERSION_MAJOR);
 

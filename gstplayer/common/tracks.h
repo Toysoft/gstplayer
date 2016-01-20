@@ -239,32 +239,35 @@ static void FillVideoTracks()
 #else
                 GstCaps* caps = gst_pad_get_current_caps(videopad);
 #endif
-                if (!caps)
+                if (caps)
                 {
-                    continue;
+                    GstStructure *str = gst_caps_get_structure (caps, 0); 
+                    if(str)
+                    {
+                        const gchar *g_type = gst_structure_get_name(str);
+                        int num = 0;
+                        int denom = 0;
+                        
+                        TrackDescription_t *track = &g_video_tracks[j];
+                        track->Id = i;
+                        SetStr(&(track->Name), "und");
+                        SetStr(&(track->Encoding), (char *)g_type);
+                        
+                        gst_structure_get_int(str, "width",  &track->width); 
+                        gst_structure_get_int(str, "height", &track->height);
+                        if(gst_structure_get_fraction(str, "framerate", &num, &denom) && num > 0 && denom > 0)
+                        {
+                            if(denom == 1001)
+                            {
+                                denom = 1000;
+                            }
+                            track->frame_rate = num * 1000 / denom;
+                        }
+                        ++j;
+                    }
+                    gst_caps_unref(caps);
                 }
-                
-                GstStructure *str = gst_caps_get_structure (caps, 0); 
-                const gchar *g_type = gst_structure_get_name(str);
-                int num = 0;
-                int denom = 0;
-                
-                TrackDescription_t *track = &g_video_tracks[j];
-                track->Id = i;
-                SetStr(&(track->Name), "und");
-                SetStr(&(track->Encoding), (char *)g_type);
-                
-                gst_structure_get_int(str, "width",  &track->width); 
-                gst_structure_get_int(str, "height", &track->height);
-                gst_structure_get_fraction(str, "framerate", &num, &denom);
-                gst_caps_unref(caps);
-                if(denom == 1001)
-                {
-                    denom = 1000;
-                }
-                track->frame_rate = num * 1000 / denom;
                 gst_object_unref (videopad); 
-                ++j;
             }
         }
         g_video_num = j;
