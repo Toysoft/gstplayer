@@ -201,7 +201,7 @@ int main(int argc,char* argv[])
 #if GST_VERSION_MAJOR < 1
     int ver = 20;
 #else
-    int ver = 10020;
+    int ver = 10021;
 #endif
     fprintf(stderr, "{\"GSTPLAYER_EXTENDED\":{\"version\":%d,\"gst_ver_major\":%d}}\n", ver, GST_VERSION_MAJOR);
 

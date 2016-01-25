@@ -662,20 +662,19 @@ int backend_stop()
     }
     if (g_gstIFDSrc)
     {
-        if (g_iptv_download_timeout > 0 )
+        //if (g_iptv_download_timeout > 0 )
         {
-            g_object_set(G_OBJECT(g_gstIFDSrc), "timeout", 0, NULL);
+            g_iptv_download_timeout = 0;
+            g_object_set(G_OBJECT(g_gstIFDSrc), "timeout", g_iptv_download_timeout, NULL);
         }
         gst_object_unref(GST_OBJECT(g_gstIFDSrc));
         g_gstIFDSrc = NULL;
     }
-
     if(g_gst_playbin)
     {
         GstState st = GST_STATE_NULL;
         GstStateChangeReturn res = gst_element_set_state(g_gst_playbin, GST_STATE_NULL);
         res = gst_element_get_state(g_gst_playbin, &st, 0, 10 * GST_SECOND);
-        
         /* We give 5s for close */
         if(GST_STATE_CHANGE_SUCCESS == res
            && GST_STATE_NULL == st)
