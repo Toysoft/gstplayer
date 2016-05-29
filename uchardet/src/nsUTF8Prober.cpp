@@ -48,9 +48,6 @@ nsProbingState nsUTF8Prober::HandleData(const char* aBuf, PRUint32 aLen)
 {
   nsSMState codingState;
 
-  if (mState == eNotMe)
-    return eNotMe;
-
   for (PRUint32 i = 0; i < aLen; i++)
   {
     codingState = mCodingSM->NextState(aBuf[i]);
@@ -64,10 +61,6 @@ nsProbingState nsUTF8Prober::HandleData(const char* aBuf, PRUint32 aLen)
       if (mCodingSM->GetCurrentCharLen() >= 2)
         mNumOfMBChar++;
     }
-    else if (codingState == eError)
-    {
-      return mState = eNotMe;
-    }
   }
 
   if (mState == eDetecting)
@@ -80,8 +73,6 @@ nsProbingState nsUTF8Prober::HandleData(const char* aBuf, PRUint32 aLen)
 
 float nsUTF8Prober::GetConfidence(void)
 {
-  if (mState == eNotMe)
-    return 0.001;
   float unlike = (float)0.99;
 
   if (mNumOfMBChar < 6)

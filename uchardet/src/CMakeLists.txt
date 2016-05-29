@@ -1,4 +1,3 @@
-
 set(
 	UCHARDET_HEADERS
 	uchardet.h
@@ -8,12 +7,24 @@ set(
 	UCHARDET_SOURCES
 	CharDistribution.cpp
 	JpCntx.cpp
-	LangBulgarianModel.cpp
-	LangCyrillicModel.cpp
-	LangGreekModel.cpp
-	LangHungarianModel.cpp
-	LangHebrewModel.cpp
-	LangThaiModel.cpp
+	LangModels/LangArabicModel.cpp
+	LangModels/LangBulgarianModel.cpp
+	LangModels/LangRussianModel.cpp
+	LangModels/LangEsperantoModel.cpp
+	LangModels/LangFrenchModel.cpp
+	LangModels/LangDanishModel.cpp
+	LangModels/LangGermanModel.cpp
+	LangModels/LangGreekModel.cpp
+	LangModels/LangHungarianModel.cpp
+	LangModels/LangHebrewModel.cpp
+	LangModels/LangSpanishModel.cpp
+	LangModels/LangThaiModel.cpp
+	LangModels/LangTurkishModel.cpp
+	LangModels/LangVietnameseModel.cpp
+	LangModels/LangPolishModel.cpp
+	LangModels/LangCzechModel.cpp
+	LangModels/LangFinnishModel.cpp
+	LangModels/LangSwedishModel.cpp
 	nsHebrewProber.cpp
 	nsCharSetProber.cpp
 	nsBig5Prober.cpp
@@ -34,41 +45,16 @@ set(
 	uchardet.cpp
 )
 
-set (UCHARDET_TARGET libuchardet)
-set (UCHARDET_STATIC_TARGET libuchardet_static)
+set (UCHARDET_LIBRARY libuchardet)
+set (UCHARDET_LIBRARY libuchardet PARENT_SCOPE)
+
+if (BUILD_STATIC AND BUILD_SHARED_LIBS)
+	set (UCHARDET_STATIC_LIBRARY libuchardet_static)
+endif ()
 
 add_definitions(
-	-DPKGDATADIR="${DIR_SHARE_OPENCC}"
-	-DLOCALEDIR="${DIR_SHARE_LOCALE}"
 	-DVERSION="${UCHARDET_VERSION}"
-	-DPACKAGE_NAME="${PACKAGE_NAME}"
 	-Wall
-)
-
-add_library(
-	${UCHARDET_TARGET}
-	SHARED
-	${UCHARDET_SOURCES}
-)
-
-add_library(
-	${UCHARDET_STATIC_TARGET}
-	STATIC
-	${UCHARDET_SOURCES}
-)
-
-set_target_properties(
-	${UCHARDET_TARGET}
-	${UCHARDET_STATIC_TARGET}
-	PROPERTIES
-		LINKER_LANGUAGE
-			CXX
-		OUTPUT_NAME
-			uchardet
-		VERSION
-			0.0.0
-		SOVERSION
-			0
 )
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -78,38 +64,81 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 	)
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
 
+add_library(
+	${UCHARDET_LIBRARY}
+	${UCHARDET_SOURCES}
+)
+
+if (UCHARDET_STATIC_LIBRARY)
+	add_library(
+		${UCHARDET_STATIC_LIBRARY}
+		STATIC
+		${UCHARDET_SOURCES}
+	)
+endif (UCHARDET_STATIC_LIBRARY)
+
+set_target_properties(
+	${UCHARDET_LIBRARY}
+	PROPERTIES
+		LINKER_LANGUAGE
+			CXX
+		OUTPUT_NAME
+			${PACKAGE_NAME}
+		VERSION
+			${UCHARDET_VERSION}
+		SOVERSION
+			${UCHARDET_VERSION_MAJOR}
+)
+
+if (UCHARDET_STATIC_LIBRARY)
+	set_target_properties(
+		${UCHARDET_STATIC_LIBRARY}
+		PROPERTIES
+			LINKER_LANGUAGE
+				CXX
+			OUTPUT_NAME
+				${PACKAGE_NAME}
+	)
+endif (UCHARDET_STATIC_LIBRARY)
+
 if (NOT WIN32)
-install(
-	TARGETS
-		${UCHARDET_TARGET}
-	LIBRARY DESTINATION
-		${DIR_LIBRARY}
-)
+	install(
+		TARGETS
+			${UCHARDET_LIBRARY}
+		LIBRARY DESTINATION
+			${CMAKE_INSTALL_LIBDIR}
+		ARCHIVE DESTINATION
+			${CMAKE_INSTALL_LIBDIR}
+	)
 else (NOT WIN32)
-install(
-	TARGETS
-		${UCHARDET_TARGET}
-        RUNTIME DESTINATION
-                ${DIR_BIN}
-	ARCHIVE DESTINATION
-		${DIR_LIBRARY}
-)
+	install(
+		TARGETS
+			${UCHARDET_LIBRARY}
+		RUNTIME DESTINATION
+			${CMAKE_INSTALL_BINDIR}
+		ARCHIVE DESTINATION
+			${CMAKE_INSTALL_LIBDIR}
+	)
 endif (NOT WIN32)
 
-install(
-	TARGETS
-		${UCHARDET_STATIC_TARGET}
-	ARCHIVE DESTINATION
-		${DIR_LIBRARY_STATIC}
-)
+if (UCHARDET_STATIC_LIBRARY)
+	install(
+		TARGETS
+			${UCHARDET_STATIC_LIBRARY}
+		ARCHIVE DESTINATION
+			${CMAKE_INSTALL_LIBDIR}
+	)
+endif (UCHARDET_STATIC_LIBRARY)
 
 install(
 	FILES
 		${UCHARDET_HEADERS}
 	DESTINATION
-		${DIR_INCLUDE}/uchardet
+		${CMAKE_INSTALL_INCLUDEDIR}/${PACKAGE_NAME}
 )
 
 include(symbols.cmake)
 
-add_subdirectory(tools)
+if (BUILD_BINARY)
+	add_subdirectory(tools)
+endif (BUILD_BINARY)

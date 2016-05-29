@@ -60,7 +60,7 @@ void detect(FILE * fp)
         if (retval != 0)
         {
             fprintf(stderr, "Handle data error.\n");
-            exit(0);
+            exit(1);
         }
     }
     uchardet_data_end(handle);
@@ -69,7 +69,7 @@ void detect(FILE * fp)
     if (*charset)
     	printf("%s\n", charset);
 	else
-		printf("ascii/unknown\n");
+		printf("unknown\n");
 	
     uchardet_delete(handle);
 }
@@ -80,8 +80,8 @@ void show_version()
     printf("uchardet Command Line Tool\n");
     printf("Version %s\n", VERSION);
     printf("\n");
-    printf("Author: %s\n", "BYVoid");
-    printf("Bug Report: %s\n", "http://code.google.com/p/uchardet/issues/entry");
+    printf("Authors: %s\n", "BYVoid, Jehan");
+    printf("Bug Report: %s\n", "https://github.com/BYVoid/uchardet/issues");
     printf("\n");
 }
 

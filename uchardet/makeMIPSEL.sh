@@ -12,6 +12,6 @@ fi
 OUT_NAME="../out/mipsel/uchardet"$BIN_POSTFIX
 cd src
 
-mipsel-oe-linux-g++ -DVERSION='"0.0.2"' -fdata-sections -ffunction-sections -Wl,--gc-sections -Os --sysroot=$SYSROOT -o $OUT_NAME *.cpp tools/*.cpp $STATIC_LINK
+mipsel-oe-linux-g++ -DVERSION='"0.0.5"' -fdata-sections -ffunction-sections -Wl,--gc-sections -Os --sysroot=$SYSROOT -o $OUT_NAME *.cpp tools/*.cpp LangModels/*.cpp $STATIC_LINK
 mipsel-oe-linux-strip -s $OUT_NAME
 

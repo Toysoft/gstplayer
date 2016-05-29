@@ -11,6 +11,6 @@ fi
 OUT_NAME="../out/sh4/uchardet"$BIN_POSTFIX
 cd src
 
-sh4-linux-g++ -DVERSION='"0.0.2"' -fdata-sections -ffunction-sections -Wl,--gc-sections -Os -o $OUT_NAME *.cpp tools/*.cpp $STATIC_LINK
+sh4-linux-g++ -DVERSION='"0.0.5"' -fdata-sections -ffunction-sections -Wl,--gc-sections -Os -o $OUT_NAME *.cpp tools/*.cpp LangModels/*.cpp $STATIC_LINK
 sh4-linux-strip -s $OUT_NAME
 

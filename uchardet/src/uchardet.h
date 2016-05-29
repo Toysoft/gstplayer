@@ -79,9 +79,9 @@ void uchardet_data_end(uchardet_t ud);
 void uchardet_reset(uchardet_t ud);
 
 /**
- * Get the name of encoding that was detected.
+ * Get an iconv-compatible name of the encoding that was detected.
  * @param ud [in] handle of a instance of uchardet
- * @return name of charset on success and "" on failure or pure ascii.
+ * @return name of charset on success and "" on failure.
  */
 const char * uchardet_get_charset(uchardet_t ud);
 

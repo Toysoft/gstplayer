@@ -17,6 +17,6 @@ fi
 OUT_NAME="../out/armv7/uchardet"$BIN_POSTFIX
 cd src
 
-"$CROSS_COMPILE"g++ -DVERSION='"0.0.2"' -march=armv7-a -mfloat-abi=hard -mfpu=neon -fdata-sections -ffunction-sections -Wl,--gc-sections -Os --sysroot=$SYSROOT -o $OUT_NAME *.cpp tools/*.cpp $STATIC_LINK
+"$CROSS_COMPILE"g++ -DVERSION='"0.0.5"' -march=armv7-a -mfloat-abi=hard -mfpu=neon -fdata-sections -ffunction-sections -Wl,--gc-sections -Os --sysroot=$SYSROOT -o $OUT_NAME *.cpp tools/*.cpp  LangModels/*.cpp $STATIC_LINK
 "$CROSS_COMPILE"strip -s $OUT_NAME
 

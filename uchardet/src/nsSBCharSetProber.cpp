@@ -44,22 +44,34 @@ nsProbingState nsSingleByteCharSetProber::HandleData(const char* aBuf, PRUint32 
 
   for (PRUint32 i = 0; i < aLen; i++)
   {
-    // Order is in [1-64] but we want 0-63 here. 
-    order = mModel->charToOrderMap[(unsigned char)aBuf[i]] -1;
+    order = mModel->charToOrderMap[(unsigned char)aBuf[i]];
 
     if (order < SYMBOL_CAT_ORDER)
+    {
       mTotalChar++;
-    if (order < SAMPLE_SIZE)
+    }
+    else if (order == ILL)
+    {
+      /* When encountering an illegal codepoint, no need
+       * to continue analyzing data. */
+      mState = eNotMe;
+      break;
+    }
+    else if (order == CTR)
+    {
+      mCtrlChar++;
+    }
+    if (order < mModel->freqCharCount)
     {
         mFreqChar++;
 
-      if (mLastOrder < SAMPLE_SIZE)
+      if (mLastOrder < mModel->freqCharCount)
       {
         mTotalSeqs++;
         if (!mReversed)
-          ++(mSeqCounters[mModel->precedenceMatrix[mLastOrder*SAMPLE_SIZE+order]]);
+          ++(mSeqCounters[mModel->precedenceMatrix[mLastOrder*mModel->freqCharCount+order]]);
         else // reverse the order of the letters in the lookup
-          ++(mSeqCounters[mModel->precedenceMatrix[order*SAMPLE_SIZE+mLastOrder]]);
+          ++(mSeqCounters[mModel->precedenceMatrix[order*mModel->freqCharCount+mLastOrder]]);
       }
     }
     mLastOrder = order;
@@ -86,6 +98,7 @@ void  nsSingleByteCharSetProber::Reset(void)
     mSeqCounters[i] = 0;
   mTotalSeqs = 0;
   mTotalChar = 0;
+  mCtrlChar  = 0;
   mFreqChar = 0;
 }
 
@@ -103,6 +116,19 @@ float nsSingleByteCharSetProber::GetConfidence(void)
 
   if (mTotalSeqs > 0) {
     r = ((float)1.0) * mSeqCounters[POSITIVE_CAT] / mTotalSeqs / mModel->mTypicalPositiveRatio;
+    /* Multiply by a ratio of positive sequences per characters.
+     * This would help in particular to distinguish close winners.
+     * Indeed if you add a letter, you'd expect the positive sequence count
+     * to increase as well. If it doesn't, it may mean that this new codepoint
+     * may not have been a letter, but instead a symbol (or some other
+     * character). This could make the difference between very closely related
+     * charsets used for the same language.
+     */
+    r = r * (mSeqCounters[POSITIVE_CAT] + (float) mSeqCounters[PROBABLE_CAT] / 4) / mTotalChar;
+    /* The more control characters (proportionnaly to the size of the text), the
+     * less confident we become in the current charset.
+     */
+    r = r * (mTotalChar - mCtrlChar) / mTotalChar;
     r = r*mFreqChar/mTotalChar;
     if (r >= (float)1.00)
       r = (float)0.99;
@@ -112,7 +138,7 @@ float nsSingleByteCharSetProber::GetConfidence(void)
 #endif
 }
 
-const char* nsSingleByteCharSetProber::GetCharSetName() 
+const char* nsSingleByteCharSetProber::GetCharSetName()
 {
   if (!mNameProber)
     return mModel->charsetName;
@@ -122,6 +148,6 @@ const char* nsSingleByteCharSetProber::GetCharSetName()
 #ifdef DEBUG_chardet
 void nsSingleByteCharSetProber::DumpStatus()
 {
-  printf("  SBCS: %1.3f [%s] [%s]\r\n", GetConfidence(), mModel->langName, GetCharSetName());
+  printf("  SBCS: %1.3f [%s]\r\n", GetConfidence(), GetCharSetName());
 }
 #endif

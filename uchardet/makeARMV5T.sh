@@ -18,6 +18,6 @@ fi
 OUT_NAME="../out/armv5t/uchardet"$BIN_POSTFIX
 cd src
 
-"$CROSS_COMPILE"g++ -DVERSION='"0.0.2"' -mfloat-abi=softfp -mtune=cortex-a9 -mfpu=vfpv3-d16 -pipe -fdata-sections -ffunction-sections -Wl,--gc-sections -Os --sysroot=$SYSROOT -o $OUT_NAME *.cpp tools/*.cpp $STATIC_LINK
+"$CROSS_COMPILE"g++ -DVERSION='"0.0.5"' -mfloat-abi=softfp -mtune=cortex-a9 -mfpu=vfpv3-d16 -pipe -fdata-sections -ffunction-sections -Wl,--gc-sections -Os --sysroot=$SYSROOT -o $OUT_NAME *.cpp tools/*.cpp LangModels/*.cpp $STATIC_LINK
 "$CROSS_COMPILE"strip -s $OUT_NAME
 
