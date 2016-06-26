@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./makeSH4.sh
+./makeSH4_old.sh
 ./makeMIPSEL.sh
 ./makeI686.sh
 ./makeARMV7.sh
