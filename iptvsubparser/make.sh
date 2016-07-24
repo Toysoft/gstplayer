@@ -22,6 +22,7 @@ then
     usage
 fi
 
+OUTPUT_FILE_NAME='_subparser.so'
 case "$EPLATFORM" in
     i686)
         CROSS_COMPILE=""
@@ -40,6 +41,7 @@ case "$EPLATFORM" in
         PATH=$BASE_PATH"i686-linux/usr/bin/mipsel-oe-linux/":$PATH
         SYSROOT=$BASE_PATH"et4x00"
         CFLAGS="--sysroot=$SYSROOT -mel -mabi=32 -march=mips32 -I$SYSROOT/usr/include/python2.7/"
+        OUTPUT_FILE_NAME='_subparser.so.fpu' # hard float
         ;;
     mipsel_softfpu)
         EPLATFORM="mipsel" # temporary, because there is no platform mipsel_softfpu - soft fpu will work also on CPU with hard CPU
@@ -74,10 +76,10 @@ SOURCE_FILES=" $PWD/src/subparsermodule.c "
 SOURCE_FILES+=" $PWD/src/vlc/src/subtitle.c "
 SOURCE_FILES+=" $PWD/src/ffmpeg/src/htmlsubtitles.c "
 
-rm -rf $PWD/out/$EPLATFORM/
-mkdir $PWD/out/$EPLATFORM/
+rm -rf $PWD/out/$EPLATFORM/$OUTPUT_FILE_NAME
+mkdir -p $PWD/out/$EPLATFORM/
 
-OUT_FILE=$PWD/out/$EPLATFORM/subparser.so 
+OUT_FILE=$PWD/out/$EPLATFORM/$OUTPUT_FILE_NAME
 
 "$CROSS_COMPILE"gcc -shared -DNDEBUG -g -O3 -Wall -Wstrict-prototypes -fPIC -DMAJOR_VERSION=0 -DMINOR_VERSION=1 $CFLAGS $LDFLAGS $SOURCE_FILES -o $OUT_FILE
 "$CROSS_COMPILE"strip -s $OUT_FILE

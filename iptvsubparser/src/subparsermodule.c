@@ -85,7 +85,7 @@ static char *get_text(char *str, const int i_type, int b_removeTags, char *tmpBu
     return str;
 }
 
-static PyObject * subparser_parse(PyObject *self, PyObject *args)
+static PyObject * _subparser_parse(PyObject *self, PyObject *args)
 {
     const char *inputStr = NULL;
     int i_microsecperframe = 0;
@@ -207,8 +207,8 @@ static PyObject * subparser_parse(PyObject *self, PyObject *args)
 }
 
 
-static PyMethodDef subparserMethods[] = {
-    {"parse", (PyCFunction)subparser_parse, METH_VARARGS,
+static PyMethodDef _subparserMethods[] = {
+    {"parse", (PyCFunction)_subparser_parse, METH_VARARGS,
      "return subtitles atom list parsed from given string (inputStr, i_microsecperframe, b_removeTags, b_setEndTime, i_CPS, i_WPM\n\n"
      " inputStr - (string encoded with UTF-8)\n"
      " i_microsecperframe - (microseconds per frame - used when subtitles use fps)\n"
@@ -223,7 +223,7 @@ static PyMethodDef subparserMethods[] = {
     {NULL,NULL,0,NULL}
 };
 
-PyMODINIT_FUNC initsubparser(void)
+PyMODINIT_FUNC init_subparser(void)
 {
-    Py_InitModule("subparser", subparserMethods);
+    Py_InitModule("_subparser", _subparserMethods);
 }
