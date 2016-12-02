@@ -72,16 +72,31 @@ esac
 
 CFLAGS="$CFLAGS -pipe -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE "
 
-SOURCE_FILES=" $PWD/src/subparsermodule.c "
-SOURCE_FILES+=" $PWD/src/vlc/src/subtitle.c "
-SOURCE_FILES+=" $PWD/src/ffmpeg/src/htmlsubtitles.c "
+SOURCE_FILES="$PWD/src/subparsermodule.c "
+
+# VLC part
+SOURCE_FILES+="$PWD/src/vlc/src/subtitle.c "
+CFLAGS+="-I$PWD/src/vlc/include "
+
+# ffmpeg part
+SOURCE_FILES+="$PWD/src/ffmpeg/src/htmlsubtitles.c "
+CFLAGS+="-I$PWD/src/ffmpeg/include "
+
+# expat part
+SOURCE_FILES+="$PWD/src/expat-2.2.0/*.c "
+CFLAGS+="-I$PWD/src/expat-2.2.0 -DHAVE_EXPAT_CONFIG_H "
+
+
+# ttml part
+SOURCE_FILES+="$PWD/src/ttml/src/*.c "
+CFLAGS+="-I$PWD/src/ttml/include "
 
 rm -rf $PWD/out/$EPLATFORM/$OUTPUT_FILE_NAME
 mkdir -p $PWD/out/$EPLATFORM/
 
 OUT_FILE=$PWD/out/$EPLATFORM/$OUTPUT_FILE_NAME
 
-"$CROSS_COMPILE"gcc -shared -DNDEBUG -g -O3 -Wall -Wstrict-prototypes -fPIC -DMAJOR_VERSION=0 -DMINOR_VERSION=1 $CFLAGS $LDFLAGS $SOURCE_FILES -o $OUT_FILE
+"$CROSS_COMPILE"gcc -shared -DNDEBUG -Os -fdata-sections -ffunction-sections -Wall -Wstrict-prototypes -fPIC -DMAJOR_VERSION=0 -DMINOR_VERSION=2 $CFLAGS $LDFLAGS $SOURCE_FILES -o $OUT_FILE -Wl,--gc-sections
 "$CROSS_COMPILE"strip -s $OUT_FILE
 
 echo "DONE: $OUT_FILE"

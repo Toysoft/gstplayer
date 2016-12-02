@@ -7,7 +7,7 @@
 #define IPTV_LL_TYPE long long 
 #define IPTV_UI_TYPE unsigned int 
 
-static const char SUB_PARSER_VERSION[] = "0.1";
+static const char SUB_PARSER_VERSION[] = "0.3";
 static const IPTV_UI_TYPE MAX_SUBTITLE_TEXT_SIZE = 1024;
 
 

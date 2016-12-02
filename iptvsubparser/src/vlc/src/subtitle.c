@@ -40,6 +40,7 @@
 #include <math.h>
 
 #include "../include/subtitles.h"
+#include "ttmlparser.h"
  
  /*****************************************************************************
  * Error values (shouldn't be exposed)
@@ -116,6 +117,7 @@ static const struct
     { "subviewer1", SUB_TYPE_SUBVIEW1,    "Subviewer 1", ParseSubViewer1 },
     { "text/vtt",   SUB_TYPE_VTT,         "WebVTT",      ParseCommonVTTSBV },
     { "sbv",        SUB_TYPE_SBV,         "SBV",         ParseCommonVTTSBV },
+    { "ttml",       SUB_TYPE_TTML,        "TTML",        NULL },
     { NULL,         SUB_TYPE_UNKNOWN,     "Unknown",     NULL }
 };
 
@@ -144,12 +146,57 @@ static inline float us_strtof( const char *str, char **end )
     return strtof(str, end);
 }
 
-static inline void *realloc_or_free( void *p, size_t sz )
+void *realloc_or_free( void *p, size_t sz )
 {
     void *n = realloc(p,sz);
     if( !n )
         free(p);
     return n;
+}
+
+void strnormalize_space(char *str)
+{
+    char *dest = str;
+    while (*str != '\0')
+    {
+        while (*str == ' ' && *(str + 1) == ' ')
+            str++;
+       *dest++ = *str++;
+    }   
+    *dest = '\0';
+}
+
+char *strtrim(char *str, const char *whiteSpaces)
+{
+    size_t len = 0;
+    char *frontp = str;
+    char *endp = NULL;
+
+    if( str == NULL ) { return NULL; }
+    if( str[0] == '\0' ) { return str; }
+
+    len = strlen(str);
+    endp = str + len;
+
+    while(*frontp && strchr(whiteSpaces, *frontp) ) { ++frontp; }
+    if( endp != frontp )
+    {
+        while( strchr(whiteSpaces, *(--endp)) && endp != frontp ) {}
+    }
+
+    if( str + len - 1 != endp )
+            *(endp + 1) = '\0';
+    else if( frontp != str &&  endp == frontp )
+            *str = '\0';
+    
+    endp = str;
+    if( frontp != str )
+    {
+            while( *frontp ) { *endp++ = *frontp++; }
+            *endp = '\0';
+    }
+
+    return str;
 }
  
 static char * peek_Readline( const char *subStr, uint64_t *pi_offset )
@@ -416,6 +463,11 @@ static int SubProbeType(const char *subStr)
             i_type = SUB_TYPE_VTT;
             break;
         }
+        else if( strcasestr( s, "/ttml" ) )
+        {
+            i_type = SUB_TYPE_TTML;
+            break;
+        }
         
         if (NULL != s)
         {
@@ -477,34 +529,46 @@ int VLC_SubtitleDemuxOpen( const char *subStr, const int i_microsecperframe, dem
         }
     }
     
-    /* Load the whole file */
-    TextLoad( &p_sys->txt, subStr );
-
-    /* Parse it */
-    for( i_max = 0;; )
+    if ( p_sys->i_type == SUB_TYPE_TTML  )
     {
-        if( p_sys->i_subtitles >= i_max )
+        int status = ReadSubtitltesTTML(p_sys, subStr);
+        if (status != VLC_SUCCESS)
         {
-            i_max += 500;
-            if( !( p_sys->subtitle = realloc_or_free( p_sys->subtitle,
-                                              sizeof(subtitle_t) * i_max ) ) )
-            {
-                TextUnload( &p_sys->txt );
-                free( p_sys->psz_type_name );
-                free( p_sys );
-                return VLC_ENOMEM;
-            }
+            VLC_SubtitleDemuxClose(p_sys);
+            return status;
         }
-
-        if( pf_read( &demux, &p_sys->subtitle[p_sys->i_subtitles],
-                     p_sys->i_subtitles ) )
-            break;
-
-        p_sys->i_subtitles++;
     }
-    
-    /* Unload */
-    TextUnload( &p_sys->txt );
+    else
+    {
+        /* Load the whole file */
+        TextLoad( &p_sys->txt, subStr );
+
+        /* Parse it */
+        for( i_max = 0;; )
+        {
+            if( p_sys->i_subtitles >= i_max )
+            {
+                i_max += 500;
+                if( !( p_sys->subtitle = realloc_or_free( p_sys->subtitle,
+                                                  sizeof(subtitle_t) * i_max ) ) )
+                {
+                    TextUnload( &p_sys->txt );
+                    free( p_sys->psz_type_name );
+                    free( p_sys );
+                    return VLC_ENOMEM;
+                }
+            }
+
+            if( pf_read( &demux, &p_sys->subtitle[p_sys->i_subtitles],
+                         p_sys->i_subtitles ) )
+                break;
+
+            p_sys->i_subtitles++;
+        }
+        
+        /* Unload */
+        TextUnload( &p_sys->txt );
+    }
     
     /* Fix subtitle (order and time) *** */
     p_sys->i_subtitle = 0;
@@ -532,16 +596,18 @@ int VLC_SubtitleDemuxOpen( const char *subStr, const int i_microsecperframe, dem
 
 void VLC_SubtitleDemuxClose( demux_sys_t *p_sys )
 {
-    int i;
-
-    for( i = 0; i < p_sys->i_subtitles; i++ )
+    if (p_sys->subtitle)
     {
-        free( p_sys->subtitle[i].psz_text );
+        int i;
+        for( i = 0; i < p_sys->i_subtitles; i++ )
+        {
+            free( p_sys->subtitle[i].psz_text );
+        }
     }
+    
     free( p_sys->psz_type_name );
     free( p_sys->subtitle );
     free( p_sys->psz_header );
-
     free( p_sys );
 }
 
@@ -687,8 +753,7 @@ static int ParseSubRipSubViewer( demux_t *p_demux, subtitle_t *p_subtitle,
 /* subtitle_ParseSubRipTimingValue
  * Parses SubRip timing value.
  */
-static int subtitle_ParseSubRipTimingValue(int64_t *timing_value,
-                                           const char *s)
+static int subtitle_ParseSubRipTimingValue(int64_t *timing_value, const char *s)
 {
     int h1, m1, s1, d1 = 0;
 
