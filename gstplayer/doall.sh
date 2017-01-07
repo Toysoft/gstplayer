@@ -6,6 +6,7 @@ mkdir tmp
 
 (cd gst-0.10 ; ./makeSH4.sh)
 (cd gst-0.10 ; ./makeMIPSEL.sh) 
+(cd gst-0.10 ; ./makeARMV7.sh) 
 (cd gst-0.10 ; ./makeI686.sh)
 
 cp -Rf gst-0.10/sh4 tmp/
