@@ -463,7 +463,7 @@ static int SubProbeType(const char *subStr)
             i_type = SUB_TYPE_VTT;
             break;
         }
-        else if( strcasestr( s, "/ttml" ) )
+        else if( strcasestr( s, "/ttml" ) || strcasestr( s, "/ttaf" ) || strcasestr( s, "<tt " ) )
         {
             i_type = SUB_TYPE_TTML;
             break;
