@@ -26,6 +26,7 @@ Based on:
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/time.h>
 #include <glib-object.h>
 
 static GstElement *g_gst_playbin = NULL;
